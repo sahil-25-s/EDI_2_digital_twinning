@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Vitamin/Disease Prediction</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin: 6px 0; }
+    h2 { margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Vitamin/Disease Prediction</h1>
+
+  <form action="/predict" method="post">
+    <label>Age: <input type="number" name="age" min="0" required /></label>
+
+    <label>Gender:
+      <select name="gender" required>
+        <option value="Female">Female</option>
+        <option value="Male">Male</option>
+      </select>
+    </label>
+
+    <label>BMI: <input type="number" step="0.1" name="bmi" required /></label>
+
+    <label>Smoking status:
+      <select name="smoking_status" required>
+        <option value="Current">Current</option>
+        <option value="Former">Former</option>
+        <option value="Never">Never</option>
+      </select>
+    </label>
+
+    <label>Alcohol consumption:
+      <select name="alcohol_consumption">
+        <option value="">Not provided</option>
+        <option value="Moderate">Moderate</option>
+        <option value="Heavy">Heavy</option>
+      </select>
+    </label>
+
+    <label>Exercise level:
+      <select name="exercise_level" required>
+        <option value="Active">Active</option>
+        <option value="Light">Light</option>
+        <option value="Moderate">Moderate</option>
+        <option value="Sedentary">Sedentary</option>
+      </select>
+    </label>
+
+    <label>Diet type:
+      <select name="diet_type" required>
+        <option value="Omnivore">Omnivore</option>
+        <option value="Pescatarian">Pescatarian</option>
+        <option value="Vegan">Vegan</option>
+        <option value="Vegetarian">Vegetarian</option>
+      </select>
+    </label>
+
+    <label>Sun exposure:
+      <select name="sun_exposure" required>
+        <option value="Low">Low</option>
+        <option value="Moderate">Moderate</option>
+        <option value="High">High</option>
+      </select>
+    </label>
+
+    <label>Income level:
+      <select name="income_level" required>
+        <option value="Low">Low</option>
+        <option value="Middle">Middle</option>
+        <option value="High">High</option>
+      </select>
+    </label>
+
+    <label>Latitude region:
+      <select name="latitude_region" required>
+        <option value="Low">Low</option>
+        <option value="Mid">Mid</option>
+        <option value="High">High</option>
+      </select>
+    </label>
+
+    <h2>Micronutrient inputs</h2>
+    <label>Vitamin A % RDA: <input type="number" step="0.1" name="vitamin_a_percent_rda" required /></label>
+    <label>Vitamin C % RDA: <input type="number" step="0.1" name="vitamin_c_percent_rda" required /></label>
+    <label>Vitamin D % RDA: <input type="number" step="0.01" name="vitamin_d_percent_rda" required /></label>
+    <label>Vitamin E % RDA: <input type="number" step="0.1" name="vitamin_e_percent_rda" required /></label>
+    <label>Vitamin B12 % RDA: <input type="number" step="0.1" name="vitamin_b12_percent_rda" required /></label>
+    <label>Folate % RDA: <input type="number" step="0.1" name="folate_percent_rda" required /></label>
+    <label>Calcium % RDA: <input type="number" step="0.1" name="calcium_percent_rda" required /></label>
+    <label>Iron % RDA: <input type="number" step="0.1" name="iron_percent_rda" required /></label>
+
+    <h2>Lab values</h2>
+    <label>Hemoglobin (g/dL): <input type="number" step="0.1" name="hemoglobin_g_dl" required /></label>
+    <label>Serum vitamin D (ng/mL): <input type="number" step="0.1" name="serum_vitamin_d_ng_ml" required /></label>
+    <label>Serum vitamin B12 (pg/mL): <input type="number" step="0.1" name="serum_vitamin_b12_pg_ml" required /></label>
+    <label>Serum folate (ng/mL): <input type="number" step="0.1" name="serum_folate_ng_ml" required /></label>
+
+    <label>Symptoms count: <input type="number" step="1" name="symptoms_count" required /></label>
+    <label>Symptoms list (semicolon-separated): <input type="text" name="symptoms_list" placeholder="fatigue;memory_problems" /></label>
+
+    <h2>Binary indicators (check if present)</h2>
+    <input type="hidden" name="has_night_blindness" value="0">
+    <label><input type="checkbox" name="has_night_blindness" value="1"> has_night_blindness</label>
+    <input type="hidden" name="has_fatigue" value="0">
+    <label><input type="checkbox" name="has_fatigue" value="1"> has_fatigue</label>
+    <input type="hidden" name="has_bleeding_gums" value="0">
+    <label><input type="checkbox" name="has_bleeding_gums" value="1"> has_bleeding_gums</label>
+    <input type="hidden" name="has_bone_pain" value="0">
+    <label><input type="checkbox" name="has_bone_pain" value="1"> has_bone_pain</label>
+    <input type="hidden" name="has_muscle_weakness" value="0">
+    <label><input type="checkbox" name="has_muscle_weakness" value="1"> has_muscle_weakness</label>
+    <input type="hidden" name="has_numbness_tingling" value="0">
+    <label><input type="checkbox" name="has_numbness_tingling" value="1"> has_numbness_tingling</label>
+    <input type="hidden" name="has_memory_problems" value="0">
+    <label><input type="checkbox" name="has_memory_problems" value="1"> has_memory_problems</label>
+    <input type="hidden" name="has_pale_skin" value="0">
+    <label><input type="checkbox" name="has_pale_skin" value="1"> has_pale_skin</label>
+
+    <input type="hidden" name="has_multiple_deficiencies" value="0">
+    <label><input type="checkbox" name="has_multiple_deficiencies" value="1"> has_multiple_deficiencies</label>
+
+    <button type="submit">Predict</button>
+  </form>
+
+</body>
+</html>
