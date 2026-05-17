@@ -4,15 +4,35 @@
   <meta charset="utf-8">
   <title>Vitamin/Disease Prediction</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 720px; }
     label { display: block; margin: 6px 0; }
     h2 { margin-top: 18px; }
+    #results { margin-top: 24px; display: none; }
+    #results.visible { display: block; }
+    .result-card {
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      padding: 16px 18px;
+      background: #f6f8fa;
+    }
+    .result-card h2 { margin-top: 0; font-size: 1.1rem; }
+    .diagnosis { font-size: 1.25rem; font-weight: 600; color: #0969da; margin: 0 0 12px; }
+    .explanation { line-height: 1.55; white-space: pre-wrap; margin: 0; }
+    .error { color: #cf222e; }
+    .loading { color: #57606a; font-style: italic; }
+    button[type="submit"] {
+      margin-top: 12px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
   </style>
 </head>
 <body>
   <h1>Vitamin/Disease Prediction</h1>
 
-  <form action="/predict" method="post">
+  <form id="prediction-form" method="post">
     <label>Age: <input type="number" name="age" min="0" required /></label>
 
     <label>Gender:
@@ -122,8 +142,80 @@
     <input type="hidden" name="has_multiple_deficiencies" value="0">
     <label><input type="checkbox" name="has_multiple_deficiencies" value="1"> has_multiple_deficiencies</label>
 
-    <button type="submit">Predict</button>
+    <button type="submit" id="submit-btn">Predict &amp; Explain</button>
   </form>
+
+  <section id="results" aria-live="polite">
+    <div class="result-card">
+      <h2>Results</h2>
+      <p id="result-status" class="loading" hidden>Generating explanation…</p>
+      <p id="result-diagnosis" class="diagnosis" hidden></p>
+      <p id="result-explanation" class="explanation" hidden></p>
+      <p id="result-error" class="error" hidden></p>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("prediction-form");
+    const results = document.getElementById("results");
+    const statusEl = document.getElementById("result-status");
+    const diagnosisEl = document.getElementById("result-diagnosis");
+    const explanationEl = document.getElementById("result-explanation");
+    const errorEl = document.getElementById("result-error");
+    const submitBtn = document.getElementById("submit-btn");
+
+    function hideResultFields() {
+      statusEl.hidden = true;
+      diagnosisEl.hidden = true;
+      explanationEl.hidden = true;
+      errorEl.hidden = true;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideResultFields();
+      results.classList.add("visible");
+      statusEl.hidden = false;
+      statusEl.textContent = "Generating explanation…";
+      submitBtn.disabled = true;
+
+      form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+        const hidden = form.querySelector(`input[type="hidden"][name="${checkbox.name}"]`);
+        if (hidden) {
+          hidden.disabled = checkbox.checked;
+        }
+      });
+
+      try {
+        const response = await fetch("/explain", {
+          method: "POST",
+          body: new FormData(form),
+        });
+        const data = await response.json();
+
+        statusEl.hidden = true;
+        if (!response.ok || data.error) {
+          errorEl.hidden = false;
+          errorEl.textContent = data.error || "Request failed.";
+          return;
+        }
+
+        diagnosisEl.hidden = false;
+        diagnosisEl.textContent = data.diagnosis;
+        explanationEl.hidden = false;
+        explanationEl.textContent = data.explanation;
+      } catch (err) {
+        statusEl.hidden = true;
+        errorEl.hidden = false;
+        errorEl.textContent = "Could not reach the server. Is the app running?";
+      } finally {
+        submitBtn.disabled = false;
+        form.querySelectorAll('input[type="hidden"]').forEach((input) => {
+          input.disabled = false;
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

@@ -9,8 +9,28 @@ from sklearn.preprocessing import LabelEncoder
 
 app = Flask(__name__, static_folder="html_files")
 
+def load_dotenv_file(path=".env"):
+    if not os.path.exists(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if "=" not in stripped:
+                continue
+            key, value = stripped.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            os.environ[key] = value
+load_dotenv_file()
+load_dotenv_file(os.path.join("env_files", ".env"))
+
 def prepare_model():
     data = pd.read_csv("datasets/vitamin_deficiency_disease_dataset_20260123.csv")
+    data.columns = data.columns.str.strip()
+    for col in data.select_dtypes(include=["object"]).columns:
+        data[col] = data[col].str.strip()
 
     X = data.drop(columns=["disease_diagnosis"])
 
@@ -52,47 +72,57 @@ def parse_feature(form, key, dtype):
     return raw
 
 
-def call_gemini(prompt_text: str) -> str:
-    """Call Google Gemini API using env vars GEMINI_API_KEY and GEMINI_API_ENDPOINT.
-    
-    Example env vars:
-    - GEMINI_API_KEY=your-api-key
-    - GEMINI_API_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
-    """
-    api_key = os.getenv("GEMINI_API_KEY")
-    endpoint = os.getenv("GEMINI_API_ENDPOINT")
-    if not api_key or not endpoint:
-        raise RuntimeError("GEMINI_API_KEY and GEMINI_API_ENDPOINT must be set in the environment")
+DEFAULT_GEMINI_ENDPOINT = (
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+)
 
-    # Google Gemini API format: add key as query param
+
+def normalize_gemini_endpoint(endpoint: str) -> str:
+    """Map legacy generateMessage/generateText URLs to generateContent."""
+    for suffix in (":generateMessage", ":generateText", ":generateContent"):
+        if endpoint.endswith(suffix):
+            return endpoint[: -len(suffix)] + ":generateContent"
+    return endpoint.rstrip("/") + ":generateContent"
+
+
+def call_gemini(prompt_text: str) -> str:
+    """Call Google Gemini generateContent API (GEMINI_API_KEY, optional GEMINI_API_ENDPOINT)."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY must be set in the environment")
+
+    endpoint = normalize_gemini_endpoint(
+        os.getenv("GEMINI_API_ENDPOINT", DEFAULT_GEMINI_ENDPOINT)
+    )
     url = f"{endpoint}?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    
-    # Google Gemini expects "contents" with "parts" containing "text"
     payload = {
         "contents": [
             {
-                "parts": [
-                    {"text": prompt_text}
-                ]
+                "parts": [{"text": prompt_text}],
             }
         ]
     }
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=20)
-    resp.raise_for_status()
+    resp = requests.post(
+        url,
+        headers={"Content-Type": "application/json"},
+        json=payload,
+        timeout=20,
+    )
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as exc:
+        raise RuntimeError(
+            f"Gemini request failed ({resp.status_code}) at {endpoint}: {resp.text}"
+        ) from exc
+
     data = resp.json()
+    candidates = data.get("candidates") or []
+    if candidates:
+        parts = candidates[0].get("content", {}).get("parts") or []
+        if parts and "text" in parts[0]:
+            return parts[0]["text"]
 
-    # Extract text from Google Gemini response
-    if isinstance(data, dict):
-        if "candidates" in data and isinstance(data["candidates"], list) and len(data["candidates"]) > 0:
-            first_candidate = data["candidates"][0]
-            if "content" in first_candidate and "parts" in first_candidate["content"]:
-                parts = first_candidate["content"]["parts"]
-                if isinstance(parts, list) and len(parts) > 0:
-                    return parts[0].get("text", "")
-
-    # fallback: return pretty-printed json
     return json.dumps(data)
 
 @app.route("/")
