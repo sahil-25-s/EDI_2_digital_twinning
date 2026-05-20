@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 
+from digital_twin.engine import DigitalTwin
+
 app = Flask(__name__, static_folder="html_files")
 
 def load_dotenv_file(path=".env"):
@@ -73,16 +75,21 @@ def parse_feature(form, key, dtype):
 
 
 DEFAULT_GEMINI_ENDPOINT = (
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent"
 )
 
 
 def normalize_gemini_endpoint(endpoint: str) -> str:
     """Map legacy generateMessage/generateText URLs to generateContent."""
+    endpoint = endpoint.strip()
+    if not endpoint.startswith("https://"):
+        return DEFAULT_GEMINI_ENDPOINT
     for suffix in (":generateMessage", ":generateText", ":generateContent"):
         if endpoint.endswith(suffix):
             return endpoint[: -len(suffix)] + ":generateContent"
-    return endpoint.rstrip("/") + ":generateContent"
+    if "/models/" in endpoint:
+        return endpoint.rstrip("/") + ":generateContent"
+    return DEFAULT_GEMINI_ENDPOINT
 
 
 def call_gemini(prompt_text: str) -> str:
@@ -128,6 +135,31 @@ def call_gemini(prompt_text: str) -> str:
 @app.route("/")
 def home():
     return send_from_directory("html_files", "home.html")
+
+
+@app.route("/twin")
+def twin_page():
+    return send_from_directory("html_files", "twin.html")
+
+
+@app.route("/simulate", methods=["POST"])
+def simulate():
+    """Run rule-based digital twin simulation over N days."""
+    try:
+        if request.is_json:
+            payload = request.get_json()
+        else:
+            payload = request.form.to_dict()
+        if not isinstance(payload, dict):
+            return jsonify({"error": "Invalid request body"}), 400
+
+        twin, habits = DigitalTwin.from_payload(payload)
+        result = twin.simulate(habits)
+        return jsonify(result)
+    except (KeyError, TypeError, ValueError) as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/predict", methods=["POST"])
 def predict():

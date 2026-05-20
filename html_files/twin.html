@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Digital Twin Simulation</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+    label { display: block; margin: 6px 0; }
+    h2 { margin-top: 18px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+    #results { margin-top: 24px; display: none; }
+    #results.visible { display: block; }
+    .card { border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; background: #f6f8fa; margin-bottom: 12px; }
+    .metric { display: flex; justify-content: space-between; margin: 4px 0; }
+    .bar { height: 8px; background: #e1e4e8; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+    .bar > span { display: block; height: 100%; background: #0969da; }
+    .rec { margin: 6px 0; padding-left: 1em; text-indent: -1em; }
+    .error { color: #cf222e; }
+    nav a { margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">Disease prediction</a>
+    <a href="/twin"><strong>Digital twin</strong></a>
+  </nav>
+
+  <h1>Digital Twin Simulation</h1>
+  <p>Simulate how daily habits affect your health scores over time. Targets are personalized from age, height, BMI, and lifestyle.</p>
+
+  <form id="twin-form">
+    <h2>Static profile</h2>
+    <div class="grid">
+      <label>Age <input type="number" name="age" min="1" max="120" value="30" required></label>
+      <label>Height (cm) <input type="number" name="height_cm" min="100" max="250" value="170" required></label>
+      <label>BMI <input type="number" name="bmi" step="0.1" min="10" max="60" value="22" required></label>
+      <label>Gender
+        <select name="gender" required>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </label>
+      <label>Diet
+        <select name="diet_type" required>
+          <option>Omnivore</option>
+          <option>Vegetarian</option>
+          <option>Vegan</option>
+          <option>Pescatarian</option>
+        </select>
+      </label>
+      <label>Exercise
+        <select name="exercise_level" required>
+          <option>Sedentary</option>
+          <option>Light</option>
+          <option selected>Moderate</option>
+          <option>Active</option>
+        </select>
+      </label>
+      <label>Smoking
+        <select name="smoking_status" required>
+          <option>Never</option>
+          <option>Former</option>
+          <option>Current</option>
+        </select>
+      </label>
+      <label>Alcohol
+        <select name="alcohol_consumption">
+          <option value="None">None</option>
+          <option>Moderate</option>
+          <option>Heavy</option>
+        </select>
+      </label>
+      <label>Sun exposure
+        <select name="sun_exposure" required>
+          <option>Low</option>
+          <option>Moderate</option>
+          <option>High</option>
+        </select>
+      </label>
+    </div>
+
+    <h2>Daily habits (repeated each simulated day)</h2>
+    <div class="grid">
+      <label>Simulation days <input type="number" name="simulation_days" min="1" max="365" value="14" required></label>
+      <label>Calories/day <input type="number" name="calories_per_day" value="2200" required></label>
+      <label>Protein (g) <input type="number" name="protein_per_day" value="80" required></label>
+      <label>Carbs (g) <input type="number" name="carbohydrates_per_day" value="250" required></label>
+      <label>Fats (g) <input type="number" name="fats_per_day" value="70" required></label>
+      <label>Water (L) <input type="number" name="water_intake_liters" step="0.1" value="2.5" required></label>
+      <label>Sleep (hrs) <input type="number" name="sleep_hours" step="0.5" value="7" required></label>
+      <label>Screen time (hrs) <input type="number" name="screen_time_hours" step="0.5" value="5" required></label>
+      <label>Vitamin D (% RDA) <input type="number" name="vitamin_d_percent_rda" value="80" required></label>
+      <label>Vitamin B12 (% RDA) <input type="number" name="vitamin_b12_percent_rda" value="90" required></label>
+      <label>Iron (% RDA) <input type="number" name="iron_percent_rda" value="85" required></label>
+    </div>
+
+    <button type="submit">Run simulation</button>
+  </form>
+
+  <section id="results">
+    <div class="card">
+      <h2>Personalized targets</h2>
+      <pre id="targets"></pre>
+    </div>
+    <div class="card">
+      <h2>Final state (after simulation)</h2>
+      <div id="state-metrics"></div>
+    </div>
+    <div class="card">
+      <h2>Recommendations</h2>
+      <ul id="recommendations"></ul>
+    </div>
+    <p id="result-error" class="error" hidden></p>
+  </section>
+
+  <script>
+    const form = document.getElementById("twin-form");
+    const results = document.getElementById("results");
+
+    function renderBar(label, value) {
+      const v = Math.round(Number(value));
+      return `<div class="metric"><span>${label}</span><span>${v}/100</span></div>
+        <div class="bar"><span style="width:${v}%"></span></div>`;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      results.classList.add("visible");
+      document.getElementById("result-error").hidden = true;
+
+      const body = Object.fromEntries(new FormData(form));
+      for (const k of Object.keys(body)) {
+        if (["gender", "diet_type", "exercise_level", "smoking_status", "alcohol_consumption", "sun_exposure"].includes(k)) continue;
+        body[k] = Number(body[k]);
+      }
+
+      try {
+        const res = await fetch("/simulate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById("result-error").hidden = false;
+          document.getElementById("result-error").textContent = data.error || "Simulation failed";
+          return;
+        }
+
+        document.getElementById("targets").textContent = JSON.stringify(data.personalized_targets, null, 2);
+        const stateEl = document.getElementById("state-metrics");
+        stateEl.innerHTML = Object.entries(data.final_state)
+          .map(([k, v]) => renderBar(k.replace(/_/g, " "), v))
+          .join("");
+
+        const recEl = document.getElementById("recommendations");
+        recEl.innerHTML = data.recommendations.map((r) => `<li class="rec">${r}</li>`).join("");
+      } catch {
+        document.getElementById("result-error").hidden = false;
+        document.getElementById("result-error").textContent = "Could not reach server.";
+      }
+    });
+  </script>
+</body>
+</html>
