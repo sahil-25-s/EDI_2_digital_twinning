@@ -16,6 +16,8 @@
     .bar > span { display: block; height: 100%; background: #0969da; }
     .rec { margin: 6px 0; padding-left: 1em; text-indent: -1em; }
     .error { color: #cf222e; }
+    .gemini { line-height: 1.55; white-space: pre-wrap; margin: 0; }
+    .loading { color: #57606a; font-style: italic; }
     nav a { margin-right: 12px; }
   </style>
 </head>
@@ -94,7 +96,8 @@
       <label>Iron (% RDA) <input type="number" name="iron_percent_rda" value="85" required></label>
     </div>
 
-    <button type="submit">Run simulation</button>
+    <label><input type="checkbox" name="include_gemini" value="1" checked> Get AI feedback (Gemini)</label>
+    <button type="submit" id="submit-btn">Run simulation</button>
   </form>
 
   <section id="results">
@@ -109,6 +112,12 @@
     <div class="card">
       <h2>Recommendations</h2>
       <ul id="recommendations"></ul>
+    </div>
+    <div class="card">
+      <h2>AI feedback (Gemini)</h2>
+      <p id="gemini-loading" class="loading" hidden>Generating personalized feedback…</p>
+      <p id="gemini-feedback" class="gemini" hidden></p>
+      <p id="gemini-error" class="error" hidden></p>
     </div>
     <p id="result-error" class="error" hidden></p>
   </section>
@@ -127,11 +136,24 @@
       e.preventDefault();
       results.classList.add("visible");
       document.getElementById("result-error").hidden = true;
+      document.getElementById("gemini-loading").hidden = true;
+      document.getElementById("gemini-feedback").hidden = true;
+      document.getElementById("gemini-error").hidden = true;
+      document.getElementById("submit-btn").disabled = true;
 
       const body = Object.fromEntries(new FormData(form));
+      const includeGemini = body.include_gemini === "1";
+      delete body.include_gemini;
+      body.include_gemini = includeGemini;
+
       for (const k of Object.keys(body)) {
+        if (k === "include_gemini") continue;
         if (["gender", "diet_type", "exercise_level", "smoking_status", "alcohol_consumption", "sun_exposure"].includes(k)) continue;
         body[k] = Number(body[k]);
+      }
+
+      if (includeGemini) {
+        document.getElementById("gemini-loading").hidden = false;
       }
 
       try {
@@ -155,9 +177,21 @@
 
         const recEl = document.getElementById("recommendations");
         recEl.innerHTML = data.recommendations.map((r) => `<li class="rec">${r}</li>`).join("");
+
+        document.getElementById("gemini-loading").hidden = true;
+        if (data.gemini_feedback) {
+          document.getElementById("gemini-feedback").hidden = false;
+          document.getElementById("gemini-feedback").textContent = data.gemini_feedback;
+        } else if (data.gemini_error) {
+          document.getElementById("gemini-error").hidden = false;
+          document.getElementById("gemini-error").textContent = data.gemini_error;
+        }
       } catch {
         document.getElementById("result-error").hidden = false;
         document.getElementById("result-error").textContent = "Could not reach server.";
+      } finally {
+        document.getElementById("gemini-loading").hidden = true;
+        document.getElementById("submit-btn").disabled = false;
       }
     });
   </script>

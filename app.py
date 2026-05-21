@@ -132,6 +132,47 @@ def call_gemini(prompt_text: str) -> str:
 
     return json.dumps(data)
 
+
+def build_twin_gemini_prompt(simulation: dict) -> str:
+    """Build a prompt from digital twin output for Gemini lifestyle feedback."""
+    profile = simulation.get("profile", {})
+    targets = simulation.get("personalized_targets", {})
+    state = simulation.get("final_state", {})
+    recs = simulation.get("recommendations", [])
+    days = simulation.get("simulation_days", "?")
+
+    state_lines = "\n".join(
+        f"- {key.replace('_', ' ')}: {round(float(val), 1)}"
+        for key, val in state.items()
+    )
+    rec_lines = "\n".join(f"- {r}" for r in recs) if recs else "- None"
+
+    return (
+        "You are a supportive wellness coach (not a doctor). Based on this digital twin "
+        f"simulation over {days} days, give practical, encouraging feedback.\n\n"
+        "Static profile:\n"
+        f"- age: {profile.get('age')}, gender: {profile.get('gender')}, "
+        f"height_cm: {profile.get('height_cm')}, bmi: {profile.get('bmi')}\n"
+        f"- diet: {profile.get('diet_type')}, exercise: {profile.get('exercise_level')}\n"
+        f"- smoking: {profile.get('smoking_status')}, alcohol: {profile.get('alcohol_consumption')}\n"
+        f"- sun exposure: {profile.get('sun_exposure')}\n\n"
+        "Personalized daily targets used by the twin:\n"
+        f"{json.dumps(targets, indent=2)}\n\n"
+        "Final simulated state scores (0-100, higher is better except fatigue/stress/deficiency_risk):\n"
+        f"{state_lines}\n\n"
+        "Rule-based recommendations already generated:\n"
+        f"{rec_lines}\n\n"
+        "Write 2 short paragraphs:\n"
+        "1) What the simulation suggests about current health trajectory.\n"
+        "2) Top 3 prioritized habit changes for the next week.\n"
+        "Keep language simple and actionable. Do not diagnose disease."
+    )
+
+
+def _truthy(value) -> bool:
+    return str(value).lower() in ("1", "true", "yes", "on")
+
+
 @app.route("/")
 def home():
     return send_from_directory("html_files", "home.html")
@@ -155,11 +196,41 @@ def simulate():
 
         twin, habits = DigitalTwin.from_payload(payload)
         result = twin.simulate(habits)
+
+        if _truthy(payload.get("include_gemini", False)):
+            try:
+                result["gemini_feedback"] = call_gemini(build_twin_gemini_prompt(result))
+            except Exception as exc:
+                result["gemini_error"] = str(exc)
+
         return jsonify(result)
     except (KeyError, TypeError, ValueError) as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/simulate/feedback", methods=["POST"])
+def simulate_feedback():
+    """Send an existing simulation result (or re-run from payload) to Gemini."""
+    try:
+        if request.is_json:
+            payload = request.get_json() or {}
+        else:
+            payload = request.form.to_dict()
+
+        simulation = payload.get("simulation_result")
+        if not simulation:
+            twin, habits = DigitalTwin.from_payload(payload)
+            simulation = twin.simulate(habits)
+
+        feedback = call_gemini(build_twin_gemini_prompt(simulation))
+        return jsonify({"simulation": simulation, "gemini_feedback": feedback})
+    except (KeyError, TypeError, ValueError) as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
