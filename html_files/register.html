@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="auth-page">
+  <div class="glass-card wide">
+    <h1>Create your account</h1>
+    <p class="sub">Set up your profile and lifestyle baseline in a few steps.</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-error">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="steps" id="steps">
+      <div class="step active" data-step="0"></div>
+      <div class="step" data-step="1"></div>
+      <div class="step" data-step="2"></div>
+      <div class="step" data-step="3"></div>
+    </div>
+
+    <form method="post" action="/register" id="register-form" novalidate>
+      <section class="form-step" data-panel="0">
+        <h2 style="font-size:1.1rem;margin:0 0 1rem">Account</h2>
+        <div class="form-grid">
+          <div class="field"><label>Full name</label><input type="text" name="name" required></div>
+          <div class="field"><label>Email</label><input type="email" name="email" required></div>
+          <div class="field">
+            <label>Password</label>
+            <div class="password-wrap">
+              <input type="password" id="pw1" name="password" required minlength="6">
+              <button type="button" class="toggle-pw" data-toggle-password="pw1">Show</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Confirm password</label>
+            <div class="password-wrap">
+              <input type="password" id="pw2" name="confirm_password" required minlength="6">
+              <button type="button" class="toggle-pw" data-toggle-password="pw2">Show</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-step hidden" data-panel="1">
+        <h2 style="font-size:1.1rem;margin:0 0 1rem">Personal details</h2>
+        <div class="form-grid">
+          <div class="field slider-row">
+            <div><label>Age</label>
+              <input type="range" min="16" max="80" value="22" data-slider="age" data-format="int">
+            </div>
+            <span class="slider-value" data-slider-out="age">22</span>
+            <input type="hidden" name="age" data-slider-input="age" value="22">
+          </div>
+          <div class="field slider-row">
+            <div><label>Height (cm)</label>
+              <input type="range" min="140" max="210" value="170" data-slider="height_cm" data-format="int">
+            </div>
+            <span class="slider-value" data-slider-out="height_cm">170</span>
+            <input type="hidden" name="height_cm" data-slider-input="height_cm" value="170">
+          </div>
+          <div class="field slider-row">
+            <div><label>BMI</label>
+              <input type="range" min="15" max="40" step="0.1" value="22" data-slider="bmi" data-format="dec1">
+            </div>
+            <span class="slider-value" data-slider-out="bmi">22.0</span>
+            <input type="hidden" name="bmi" data-slider-input="bmi" value="22">
+          </div>
+          <div class="field"><label>Gender</label>
+            <select name="gender" required><option>Male</option><option>Female</option></select>
+          </div>
+          <div class="field"><label>Diet</label>
+            <select name="diet_type" required>
+              <option>Omnivore</option><option>Vegetarian</option><option>Vegan</option><option>Pescatarian</option>
+            </select>
+          </div>
+          <div class="field"><label>Exercise</label>
+            <select name="exercise_level" required>
+              <option>Sedentary</option><option>Light</option><option selected>Moderate</option><option>Active</option>
+            </select>
+          </div>
+          <div class="field"><label>Smoking</label>
+            <select name="smoking_status" required>
+              <option>Never</option><option>Former</option><option>Current</option>
+            </select>
+          </div>
+          <div class="field"><label>Alcohol</label>
+            <select name="alcohol_consumption"><option value="">None</option><option>Moderate</option><option>Heavy</option></select>
+          </div>
+          <div class="field"><label>Sun exposure</label>
+            <select name="sun_exposure" required><option>Low</option><option>Moderate</option><option>High</option></select>
+          </div>
+          <div class="field"><label>Income level</label>
+            <select name="income_level" required><option>Low</option><option selected>Middle</option><option>High</option></select>
+          </div>
+          <div class="field"><label>Latitude region</label>
+            <select name="latitude_region" required><option>Low</option><option selected>Mid</option><option>High</option></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-step hidden" data-panel="2">
+        <h2 style="font-size:1.1rem;margin:0 0 1rem">Health &amp; symptoms</h2>
+        <div class="form-grid">
+          <div class="field slider-row">
+            <div><label>Hemoglobin (g/dL)</label>
+              <input type="range" min="8" max="18" step="0.1" value="13.5" data-slider="hemoglobin_g_dl" data-format="dec1">
+            </div>
+            <span class="slider-value" data-slider-out="hemoglobin_g_dl">13.5</span>
+            <input type="hidden" name="hemoglobin_g_dl" data-slider-input="hemoglobin_g_dl" value="13.5">
+          </div>
+          <div class="field"><label>Vitamin A % RDA</label><input type="number" name="vitamin_a_percent_rda" value="90" required></div>
+          <div class="field"><label>Vitamin C % RDA</label><input type="number" name="vitamin_c_percent_rda" value="90" required></div>
+          <div class="field"><label>Vitamin E % RDA</label><input type="number" name="vitamin_e_percent_rda" value="90" required></div>
+          <div class="field"><label>Folate % RDA</label><input type="number" name="folate_percent_rda" value="90" required></div>
+          <div class="field"><label>Calcium % RDA</label><input type="number" name="calcium_percent_rda" value="90" required></div>
+          <div class="field"><label>Symptoms list</label><input type="text" name="symptoms_list" placeholder="fatigue;bone_pain"></div>
+          <div class="field"><label>Symptoms count</label><input type="number" name="symptoms_count" value="0" min="0" required></div>
+        </div>
+        <div class="check-grid" style="margin-top:1rem">
+          <label class="check-pill"><input type="hidden" name="has_fatigue" value="0"><input type="checkbox" name="has_fatigue" value="1"> Fatigue</label>
+          <label class="check-pill"><input type="hidden" name="has_bone_pain" value="0"><input type="checkbox" name="has_bone_pain" value="1"> Bone pain</label>
+          <label class="check-pill"><input type="hidden" name="has_night_blindness" value="0"><input type="checkbox" name="has_night_blindness" value="1"> Night blindness</label>
+          <label class="check-pill"><input type="hidden" name="has_memory_problems" value="0"><input type="checkbox" name="has_memory_problems" value="1"> Memory</label>
+          <label class="check-pill"><input type="hidden" name="has_multiple_deficiencies" value="0"><input type="checkbox" name="has_multiple_deficiencies" value="1"> Multiple deficiencies</label>
+        </div>
+        <input type="hidden" name="has_bleeding_gums" value="0">
+        <input type="hidden" name="has_muscle_weakness" value="0">
+        <input type="hidden" name="has_numbness_tingling" value="0">
+        <input type="hidden" name="has_pale_skin" value="0">
+        <input type="hidden" name="serum_vitamin_d_ng_ml" value="30">
+        <input type="hidden" name="serum_vitamin_b12_pg_ml" value="350">
+        <input type="hidden" name="serum_folate_ng_ml" value="12">
+      </section>
+
+      <section class="form-step hidden" data-panel="3">
+        <h2 style="font-size:1.1rem;margin:0 0 1rem">Daily habits</h2>
+        <div class="form-grid">
+          <div class="field slider-row">
+            <div><label>Calories / day</label>
+              <input type="range" min="1200" max="4000" step="50" value="2200" data-slider="calories_per_day" data-format="int">
+            </div>
+            <span class="slider-value" data-slider-out="calories_per_day">2200</span>
+            <input type="hidden" name="calories_per_day" data-slider-input="calories_per_day" value="2200">
+          </div>
+          <div class="field slider-row">
+            <div><label>Protein (g)</label>
+              <input type="range" min="30" max="200" value="80" data-slider="protein_per_day" data-format="int">
+            </div>
+            <span class="slider-value" data-slider-out="protein_per_day">80</span>
+            <input type="hidden" name="protein_per_day" data-slider-input="protein_per_day" value="80">
+          </div>
+          <div class="field slider-row">
+            <div><label>Water (L)</label>
+              <input type="range" min="1" max="5" step="0.1" value="2.5" data-slider="water_intake_liters" data-format="dec1">
+            </div>
+            <span class="slider-value" data-slider-out="water_intake_liters">2.5</span>
+            <input type="hidden" name="water_intake_liters" data-slider-input="water_intake_liters" value="2.5">
+          </div>
+          <div class="field slider-row">
+            <div><label>Sleep (hours)</label>
+              <input type="range" min="4" max="12" step="0.5" value="7" data-slider="sleep_hours" data-format="dec1">
+            </div>
+            <span class="slider-value" data-slider-out="sleep_hours">7.0</span>
+            <input type="hidden" name="sleep_hours" data-slider-input="sleep_hours" value="7">
+          </div>
+          <div class="field slider-row">
+            <div><label>Screen time (hrs)</label>
+              <input type="range" min="0" max="16" step="0.5" value="5" data-slider="screen_time_hours" data-format="dec1">
+            </div>
+            <span class="slider-value" data-slider-out="screen_time_hours">5.0</span>
+            <input type="hidden" name="screen_time_hours" data-slider-input="screen_time_hours" value="5">
+          </div>
+          <div class="field"><label>Carbs (g)</label><input type="number" name="carbohydrates_per_day" value="250" required></div>
+          <div class="field"><label>Fats (g)</label><input type="number" name="fats_per_day" value="70" required></div>
+          <div class="field"><label>Vitamin D % RDA</label><input type="number" name="vitamin_d_percent_rda" value="80" required></div>
+          <div class="field"><label>Vitamin B12 % RDA</label><input type="number" name="vitamin_b12_percent_rda" value="90" required></div>
+          <div class="field"><label>Iron % RDA</label><input type="number" name="iron_percent_rda" value="85" required></div>
+        </div>
+      </section>
+
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+        <button type="button" class="btn btn-secondary" id="prev-btn" disabled>Back</button>
+        <button type="button" class="btn btn-primary" id="next-btn" style="flex:1">Continue</button>
+        <button type="submit" class="btn btn-primary hidden" id="submit-btn" style="flex:1">Create account</button>
+      </div>
+    </form>
+    <p class="text-muted mt-2" style="text-align:center"><a href="/login">Already have an account?</a></p>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    let step = 0;
+    const panels = document.querySelectorAll(".form-step");
+    const stepEls = document.querySelectorAll(".step");
+    const prev = document.getElementById("prev-btn");
+    const next = document.getElementById("next-btn");
+    const submit = document.getElementById("submit-btn");
+    const form = document.getElementById("register-form");
+
+    function showStep(n) {
+      step = n;
+      panels.forEach((p, i) => p.classList.toggle("hidden", i !== n));
+      stepEls.forEach((s, i) => {
+        s.classList.toggle("active", i === n);
+        s.classList.toggle("done", i < n);
+      });
+      prev.disabled = n === 0;
+      next.classList.toggle("hidden", n === panels.length - 1);
+      submit.classList.toggle("hidden", n !== panels.length - 1);
+    }
+    next.addEventListener("click", () => { if (step < panels.length - 1) showStep(step + 1); });
+    prev.addEventListener("click", () => { if (step > 0) showStep(step - 1); });
+    form.addEventListener("submit", () => {
+      form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        const hidden = form.querySelector(`input[type="hidden"][name="${cb.name}"]`);
+        if (hidden) hidden.disabled = cb.checked;
+      });
+      document.querySelectorAll("[data-slider-input]").forEach((inp) => {
+        const slider = form.querySelector(`[data-slider="${inp.getAttribute("data-slider-input")}"]`);
+        if (slider) inp.value = slider.value;
+      });
+    });
+    initSliders();
+    showStep(0);
+  </script>
+</body>
+</html>

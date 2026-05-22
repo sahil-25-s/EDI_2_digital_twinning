@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">Lifestyle Digital Twin</div>
+      <nav>
+        <a href="/dashboard" class="active">Dashboard</a>
+        <a href="/lifestyle">Lifestyle input</a>
+        <a href="/results">Latest results</a>
+        <a href="/predict-page">Disease screening</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/logout" class="btn btn-secondary btn-block">Log out</a>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="btn btn-secondary mobile-menu" id="menu-btn">Menu</button>
+        <div>
+          <strong id="user-name">Welcome</strong>
+          <span class="text-muted" id="user-email" style="margin-left:0.5rem;font-size:0.875rem"></span>
+        </div>
+      </header>
+      <div class="page">
+        <h1 style="margin:0 0 0.5rem">Dashboard</h1>
+        <p class="text-muted">Overview from your latest simulation or baseline profile.</p>
+
+        <div class="card-grid" style="margin-top:2rem">
+          <div class="card stat-card energy">
+            <div class="label">Energy score</div>
+            <div class="value" id="stat-energy">—</div>
+          </div>
+          <div class="card stat-card fatigue">
+            <div class="label">Fatigue level</div>
+            <div class="value" id="stat-fatigue">—</div>
+          </div>
+          <div class="card stat-card risk">
+            <div class="label">Deficiency risk</div>
+            <div class="value" id="stat-risk">—</div>
+          </div>
+          <div class="card stat-card hydration">
+            <div class="label">Hydration score</div>
+            <div class="value" id="stat-hydration">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.5rem">
+          <h2 style="margin-top:0;font-size:1.1rem">Quick actions</h2>
+          <p class="text-muted">Run a new simulation with your saved lifestyle data or update your profile.</p>
+          <a href="/lifestyle" class="btn btn-primary">Run simulation</a>
+          <a href="/lifestyle" class="btn btn-secondary" style="margin-left:0.5rem">Edit lifestyle</a>
+        </div>
+
+        <div class="card hidden" id="last-run-card">
+          <h2 style="margin-top:0;font-size:1.1rem">Last diagnosis</h2>
+          <p id="last-diagnosis" class="diagnosis" style="font-size:1.2rem;font-weight:600;color:var(--primary)"></p>
+          <p class="text-muted" id="last-run-date"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    document.getElementById("menu-btn")?.addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("open");
+    });
+    async function loadDashboard() {
+      const res = await fetch("/api/dashboard", { credentials: "same-origin" });
+      if (res.status === 401) { window.location.href = "/login"; return; }
+      const data = await res.json();
+      document.getElementById("user-name").textContent = `Hello, ${data.user.name}`;
+      document.getElementById("user-email").textContent = data.user.email;
+      const s = data.summary || {};
+      const set = (id, v) => { document.getElementById(id).textContent = v != null ? Math.round(v) : "—"; };
+      set("stat-energy", s.energy_level);
+      set("stat-fatigue", s.fatigue_level);
+      set("stat-risk", s.deficiency_risk);
+      set("stat-hydration", s.hydration_score);
+      if (data.last_run) {
+        document.getElementById("last-run-card").classList.remove("hidden");
+        document.getElementById("last-diagnosis").textContent = data.last_run.disease_diagnosis || "—";
+        document.getElementById("last-run-date").textContent = data.last_run.created_at
+          ? `Last run: ${new Date(data.last_run.created_at).toLocaleString()}`
+          : "";
+      }
+    }
+    loadDashboard();
+  </script>
+</body>
+</html>

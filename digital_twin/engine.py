@@ -12,6 +12,42 @@ def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
 
 
 @dataclass
+class ClinicalAssessment:
+    """Health snapshot used for twin initialization and AI feedback."""
+    disease_diagnosis: str
+    symptoms_list: str | None = None
+    symptoms_count: int = 0
+    income_level: str = "Middle"
+    latitude_region: str = "Mid"
+    hemoglobin_g_dl: float | None = None
+    serum_vitamin_d_ng_ml: float | None = None
+    serum_vitamin_b12_pg_ml: float | None = None
+    serum_folate_ng_ml: float | None = None
+    vitamin_a_percent_rda: float | None = None
+    vitamin_c_percent_rda: float | None = None
+    vitamin_e_percent_rda: float | None = None
+    folate_percent_rda: float | None = None
+    calcium_percent_rda: float | None = None
+    has_night_blindness: int = 0
+    has_fatigue: int = 0
+    has_bleeding_gums: int = 0
+    has_bone_pain: int = 0
+    has_muscle_weakness: int = 0
+    has_numbness_tingling: int = 0
+    has_memory_problems: int = 0
+    has_pale_skin: int = 0
+    has_multiple_deficiencies: int = 0
+
+    def parsed_symptoms(self) -> list[str]:
+        if not self.symptoms_list or str(self.symptoms_list).lower() in ("none", "nan", ""):
+            return []
+        return [s.strip().lower() for s in str(self.symptoms_list).split(";") if s.strip()]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class StaticProfile:
     age: int
     gender: str
@@ -92,9 +128,15 @@ class DigitalTwin:
 
     _registry: dict[str, "DigitalTwin"] = {}
 
-    def __init__(self, profile: StaticProfile, twin_id: str | None = None):
+    def __init__(
+        self,
+        profile: StaticProfile,
+        clinical: ClinicalAssessment | None = None,
+        twin_id: str | None = None,
+    ):
         self.twin_id = twin_id or str(uuid.uuid4())
         self.profile = profile
+        self.clinical = clinical or ClinicalAssessment(disease_diagnosis="Healthy")
         self.state = self._initial_state()
         self.targets = self._compute_targets()
         self.day_history: list[dict[str, Any]] = []
@@ -107,6 +149,99 @@ class DigitalTwin:
     @classmethod
     def list_ids(cls) -> list[str]:
         return list(cls._registry.keys())
+
+    def _apply_clinical_baseline(self, s: TwinState) -> None:
+        c = self.clinical
+        if not c:
+            return
+
+        diagnosis = (c.disease_diagnosis or "Healthy").lower()
+        if diagnosis != "healthy":
+            s.deficiency_risk += 15
+            s.immune_resilience -= 8
+        if "anemia" in diagnosis:
+            s.energy_level -= 12
+            s.fatigue_level += 15
+            s.skin_health -= 8
+            s.hair_health -= 6
+        if "rickets" in diagnosis or "osteomalacia" in diagnosis:
+            s.deficiency_risk += 12
+            s.metabolic_balance -= 8
+            s.skin_health -= 5
+        if "scurvy" in diagnosis:
+            s.immune_resilience -= 10
+            s.skin_health -= 12
+        if "beriberi" in diagnosis or "pellagra" in diagnosis:
+            s.energy_level -= 10
+            s.focus_level -= 8
+
+        if c.symptoms_count >= 3:
+            s.fatigue_level += 8
+            s.stress_level += 6
+        elif c.symptoms_count >= 1:
+            s.fatigue_level += 4
+
+        for symptom in c.parsed_symptoms():
+            if "fatigue" in symptom:
+                s.fatigue_level += 10
+                s.energy_level -= 8
+            if "bone_pain" in symptom:
+                s.metabolic_balance -= 6
+                s.deficiency_risk += 5
+            if "night_blindness" in symptom:
+                s.deficiency_risk += 8
+                s.focus_level -= 5
+            if "memory" in symptom:
+                s.focus_level -= 8
+                s.mood_stability -= 6
+            if "numbness" in symptom or "tingling" in symptom:
+                s.immune_resilience -= 5
+            if "pale_skin" in symptom or "pale" in symptom:
+                s.skin_health -= 8
+                s.energy_level -= 5
+
+        flags = [
+            c.has_fatigue,
+            c.has_bone_pain,
+            c.has_night_blindness,
+            c.has_memory_problems,
+            c.has_numbness_tingling,
+            c.has_pale_skin,
+            c.has_bleeding_gums,
+            c.has_muscle_weakness,
+        ]
+        active_flags = sum(1 for f in flags if f)
+        s.fatigue_level += active_flags * 3
+        s.deficiency_risk += active_flags * 2
+
+        if c.hemoglobin_g_dl is not None and c.hemoglobin_g_dl < 12:
+            s.energy_level -= 8
+            s.fatigue_level += 10
+            s.deficiency_risk += 8
+        if c.serum_vitamin_d_ng_ml is not None and c.serum_vitamin_d_ng_ml < 20:
+            s.deficiency_risk += 10
+            s.immune_resilience -= 6
+        if c.serum_vitamin_b12_pg_ml is not None and c.serum_vitamin_b12_pg_ml < 200:
+            s.deficiency_risk += 8
+            s.focus_level -= 6
+            s.mood_stability -= 5
+        if c.serum_folate_ng_ml is not None and c.serum_folate_ng_ml < 10:
+            s.deficiency_risk += 6
+            s.mood_stability -= 4
+        if c.has_multiple_deficiencies:
+            s.deficiency_risk += 12
+            s.immune_resilience -= 8
+
+        s.energy_level = _clamp(s.energy_level)
+        s.focus_level = _clamp(s.focus_level)
+        s.fatigue_level = _clamp(s.fatigue_level)
+        s.stress_level = _clamp(s.stress_level)
+        s.deficiency_risk = _clamp(s.deficiency_risk)
+        s.skin_health = _clamp(s.skin_health)
+        s.hair_health = _clamp(s.hair_health)
+        s.immune_resilience = _clamp(s.immune_resilience)
+        s.metabolic_balance = _clamp(s.metabolic_balance)
+        s.mood_stability = _clamp(s.mood_stability)
 
     def _initial_state(self) -> TwinState:
         p = self.profile
@@ -144,6 +279,7 @@ class DigitalTwin:
         if p.age >= 60:
             s.immune_resilience -= 5
             s.skin_health -= 5
+        self._apply_clinical_baseline(s)
         return s
 
     def _activity_multiplier(self) -> float:
@@ -354,6 +490,18 @@ class DigitalTwin:
             recs.append("Consider slightly higher calories and protein to support healthy weight gain.")
         if self.profile.sun_exposure == "Low" and s.deficiency_risk > 50:
             recs.append("Prioritize vitamin D sources or safe sun exposure given low sun exposure.")
+        if self.clinical:
+            c = self.clinical
+            if c.disease_diagnosis and c.disease_diagnosis.lower() != "healthy":
+                recs.append(
+                    f"Model-indicated condition ({c.disease_diagnosis}): align nutrition and lifestyle with clinician guidance."
+                )
+            if c.symptoms_list and c.parsed_symptoms():
+                recs.append(
+                    f"Reported symptoms ({', '.join(c.parsed_symptoms())}): monitor weekly and adjust sleep, hydration, and micronutrients."
+                )
+            if c.hemoglobin_g_dl is not None and c.hemoglobin_g_dl < 12:
+                recs.append("Low hemoglobin reading: prioritize iron-rich foods and clinician follow-up.")
         if not recs:
             recs.append("Maintain current habits; overall trajectory looks stable.")
 
@@ -366,7 +514,7 @@ class DigitalTwin:
             self._update_state(scores, habits)
             self.day_history.append({"day": day, "scores": scores, "state": self.state.to_dict()})
 
-        return {
+        result = {
             "twin_id": self.twin_id,
             "simulation_days": days,
             "profile": asdict(self.profile),
@@ -375,6 +523,38 @@ class DigitalTwin:
             "recommendations": self._generate_recommendations(),
             "history": self.day_history[-min(7, len(self.day_history)) :],
         }
+        result["clinical_assessment"] = self.clinical.to_dict()
+        result["disease_diagnosis"] = self.clinical.disease_diagnosis
+        result["symptoms_list"] = self.clinical.symptoms_list
+        return result
+
+    @staticmethod
+    def _clinical_from_payload(data: dict[str, Any]) -> ClinicalAssessment:
+        return ClinicalAssessment(
+            disease_diagnosis=str(data.get("disease_diagnosis") or "Healthy"),
+            symptoms_list=data.get("symptoms_list") or None,
+            symptoms_count=int(data.get("symptoms_count", 0)),
+            income_level=str(data.get("income_level", "Middle")),
+            latitude_region=str(data.get("latitude_region", "Mid")),
+            hemoglobin_g_dl=_optional_float(data.get("hemoglobin_g_dl")),
+            serum_vitamin_d_ng_ml=_optional_float(data.get("serum_vitamin_d_ng_ml")),
+            serum_vitamin_b12_pg_ml=_optional_float(data.get("serum_vitamin_b12_pg_ml")),
+            serum_folate_ng_ml=_optional_float(data.get("serum_folate_ng_ml")),
+            vitamin_a_percent_rda=_optional_float(data.get("vitamin_a_percent_rda")),
+            vitamin_c_percent_rda=_optional_float(data.get("vitamin_c_percent_rda")),
+            vitamin_e_percent_rda=_optional_float(data.get("vitamin_e_percent_rda")),
+            folate_percent_rda=_optional_float(data.get("folate_percent_rda")),
+            calcium_percent_rda=_optional_float(data.get("calcium_percent_rda")),
+            has_night_blindness=int(data.get("has_night_blindness", 0)),
+            has_fatigue=int(data.get("has_fatigue", 0)),
+            has_bleeding_gums=int(data.get("has_bleeding_gums", 0)),
+            has_bone_pain=int(data.get("has_bone_pain", 0)),
+            has_muscle_weakness=int(data.get("has_muscle_weakness", 0)),
+            has_numbness_tingling=int(data.get("has_numbness_tingling", 0)),
+            has_memory_problems=int(data.get("has_memory_problems", 0)),
+            has_pale_skin=int(data.get("has_pale_skin", 0)),
+            has_multiple_deficiencies=int(data.get("has_multiple_deficiencies", 0)),
+        )
 
     @staticmethod
     def from_payload(data: dict[str, Any]) -> tuple["DigitalTwin", DailyHabits]:
@@ -402,9 +582,20 @@ class DigitalTwin:
             vitamin_b12_percent_rda=float(data["vitamin_b12_percent_rda"]),
             iron_percent_rda=float(data["iron_percent_rda"]),
         )
+        clinical = DigitalTwin._clinical_from_payload(data)
         twin_id = data.get("twin_id")
         if twin_id and DigitalTwin.get(twin_id):
             twin = DigitalTwin.get(twin_id)
             assert twin is not None
+            if clinical:
+                twin.clinical = clinical
+                twin.state = twin._initial_state()
+                twin.targets = twin._compute_targets()
             return twin, habits
-        return DigitalTwin(static, twin_id=twin_id), habits
+        return DigitalTwin(static, clinical=clinical, twin_id=twin_id), habits
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    return float(value)

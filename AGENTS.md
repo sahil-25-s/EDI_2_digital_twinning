@@ -19,6 +19,10 @@ The project is a Python-based Flask application.
 - Environment variables should be managed via `.env` or files in `env_files/`.
 - Use `LabelEncoder` for categorical feature encoding as established in `app.py`.
 
+## Database (PostgreSQL)
+
+See `DATABASE.md` for setup. Connection string: `DATABASE_URL` in `env_files/.env`.
+
 ## Testing Guidelines
 There is currently no automated test suite. Manual verification is performed by running `app.py` and testing the `/predict` and `/explain` endpoints.
 

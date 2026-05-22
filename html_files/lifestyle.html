@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lifestyle input</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">Lifestyle Digital Twin</div>
+      <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/lifestyle" class="active">Lifestyle input</a>
+        <a href="/results">Latest results</a>
+        <a href="/predict-page">Disease screening</a>
+      </nav>
+      <div class="sidebar-footer"><a href="/logout" class="btn btn-secondary btn-block">Log out</a></div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="btn btn-secondary mobile-menu" id="menu-btn">Menu</button>
+        <strong>Simulation setup</strong>
+      </header>
+      <div class="page">
+        <h1 style="margin:0">Lifestyle input form</h1>
+        <p class="text-muted">Adjust sliders and options, then run your multi-day digital twin simulation.</p>
+
+        <div class="steps" id="progress">
+          <div class="step done"></div><div class="step done"></div><div class="step active"></div><div class="step"></div>
+        </div>
+
+        <form id="lifestyle-form" class="card" style="margin-top:1.5rem">
+          <h2 style="margin-top:0;font-size:1.05rem">Personal details</h2>
+          <div class="form-grid">
+            <div class="field slider-row">
+              <div><label>Age</label><input type="range" min="16" max="80" value="30" data-slider="age" data-format="int"></div>
+              <span class="slider-value" data-slider-out="age">30</span>
+              <input type="hidden" name="age" data-slider-input="age" value="30">
+            </div>
+            <div class="field slider-row">
+              <div><label>Height (cm)</label><input type="range" min="140" max="210" value="170" data-slider="height_cm" data-format="int"></div>
+              <span class="slider-value" data-slider-out="height_cm">170</span>
+              <input type="hidden" name="height_cm" data-slider-input="height_cm" value="170">
+            </div>
+            <div class="field slider-row">
+              <div><label>BMI</label><input type="range" min="15" max="40" step="0.1" value="22" data-slider="bmi" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="bmi">22.0</span>
+              <input type="hidden" name="bmi" data-slider-input="bmi" value="22">
+            </div>
+            <div class="field"><label>Gender</label><select name="gender" required><option>Male</option><option>Female</option></select></div>
+            <div class="field"><label>Diet</label><select name="diet_type" required><option>Omnivore</option><option>Vegetarian</option><option>Vegan</option><option>Pescatarian</option></select></div>
+            <div class="field"><label>Exercise</label><select name="exercise_level" required><option>Sedentary</option><option>Light</option><option selected>Moderate</option><option>Active</option></select></div>
+            <div class="field"><label>Smoking</label><select name="smoking_status" required><option>Never</option><option>Former</option><option>Current</option></select></div>
+            <div class="field"><label>Alcohol</label><select name="alcohol_consumption"><option value="">None</option><option>Moderate</option><option>Heavy</option></select></div>
+            <div class="field"><label>Sun exposure</label><select name="sun_exposure" required><option>Low</option><option>Moderate</option><option>High</option></select></div>
+            <div class="field"><label>Income</label><select name="income_level" required><option>Low</option><option selected>Middle</option><option>High</option></select></div>
+            <div class="field"><label>Region</label><select name="latitude_region" required><option>Low</option><option selected>Mid</option><option>High</option></select></div>
+          </div>
+
+          <h2 style="font-size:1.05rem;margin-top:2rem">Nutrition &amp; sleep</h2>
+          <div class="form-grid">
+            <div class="field slider-row">
+              <div><label>Simulation days</label><input type="range" min="1" max="90" value="14" data-slider="simulation_days" data-format="int"></div>
+              <span class="slider-value" data-slider-out="simulation_days">14</span>
+              <input type="hidden" name="simulation_days" data-slider-input="simulation_days" value="14">
+            </div>
+            <div class="field slider-row">
+              <div><label>Calories / day</label><input type="range" min="1200" max="4000" step="50" value="2200" data-slider="calories_per_day" data-format="int"></div>
+              <span class="slider-value" data-slider-out="calories_per_day">2200</span>
+              <input type="hidden" name="calories_per_day" data-slider-input="calories_per_day" value="2200">
+            </div>
+            <div class="field slider-row">
+              <div><label>Protein (g)</label><input type="range" min="30" max="200" value="80" data-slider="protein_per_day" data-format="int"></div>
+              <span class="slider-value" data-slider-out="protein_per_day">80</span>
+              <input type="hidden" name="protein_per_day" data-slider-input="protein_per_day" value="80">
+            </div>
+            <div class="field slider-row">
+              <div><label>Water (L)</label><input type="range" min="1" max="5" step="0.1" value="2.5" data-slider="water_intake_liters" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="water_intake_liters">2.5</span>
+              <input type="hidden" name="water_intake_liters" data-slider-input="water_intake_liters" value="2.5">
+            </div>
+            <div class="field slider-row">
+              <div><label>Sleep (hrs)</label><input type="range" min="4" max="12" step="0.5" value="7" data-slider="sleep_hours" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="sleep_hours">7.0</span>
+              <input type="hidden" name="sleep_hours" data-slider-input="sleep_hours" value="7">
+            </div>
+            <div class="field slider-row">
+              <div><label>Screen time</label><input type="range" min="0" max="16" step="0.5" value="5" data-slider="screen_time_hours" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="screen_time_hours">5.0</span>
+              <input type="hidden" name="screen_time_hours" data-slider-input="screen_time_hours" value="5">
+            </div>
+            <div class="field"><label>Carbs (g)</label><input type="number" name="carbohydrates_per_day" value="250" required></div>
+            <div class="field"><label>Fats (g)</label><input type="number" name="fats_per_day" value="70" required></div>
+            <div class="field slider-row">
+              <div><label>Vitamin D % RDA</label><input type="range" min="0" max="200" value="80" data-slider="vitamin_d_percent_rda" data-format="int"></div>
+              <span class="slider-value" data-slider-out="vitamin_d_percent_rda">80</span>
+              <input type="hidden" name="vitamin_d_percent_rda" data-slider-input="vitamin_d_percent_rda" value="80">
+            </div>
+            <div class="field slider-row">
+              <div><label>B12 % RDA</label><input type="range" min="0" max="200" value="90" data-slider="vitamin_b12_percent_rda" data-format="int"></div>
+              <span class="slider-value" data-slider-out="vitamin_b12_percent_rda">90</span>
+              <input type="hidden" name="vitamin_b12_percent_rda" data-slider-input="vitamin_b12_percent_rda" value="90">
+            </div>
+            <div class="field slider-row">
+              <div><label>Iron % RDA</label><input type="range" min="0" max="200" value="85" data-slider="iron_percent_rda" data-format="int"></div>
+              <span class="slider-value" data-slider-out="iron_percent_rda">85</span>
+              <input type="hidden" name="iron_percent_rda" data-slider-input="iron_percent_rda" value="85">
+            </div>
+          </div>
+
+          <h2 style="font-size:1.05rem;margin-top:2rem">Symptoms &amp; labs</h2>
+          <div class="form-grid">
+            <div class="field"><label>Vitamin A %</label><input type="number" name="vitamin_a_percent_rda" value="90" required></div>
+            <div class="field"><label>Vitamin C %</label><input type="number" name="vitamin_c_percent_rda" value="90" required></div>
+            <div class="field"><label>Vitamin E %</label><input type="number" name="vitamin_e_percent_rda" value="90" required></div>
+            <div class="field"><label>Folate %</label><input type="number" name="folate_percent_rda" value="90" required></div>
+            <div class="field"><label>Calcium %</label><input type="number" name="calcium_percent_rda" value="90" required></div>
+            <div class="field slider-row">
+              <div><label>Hemoglobin</label><input type="range" min="8" max="18" step="0.1" value="13.5" data-slider="hemoglobin_g_dl" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="hemoglobin_g_dl">13.5</span>
+              <input type="hidden" name="hemoglobin_g_dl" data-slider-input="hemoglobin_g_dl" value="13.5">
+            </div>
+            <div class="field"><label>Serum vit D</label><input type="number" name="serum_vitamin_d_ng_ml" value="30" required></div>
+            <div class="field"><label>Serum B12</label><input type="number" name="serum_vitamin_b12_pg_ml" value="350" required></div>
+            <div class="field"><label>Serum folate</label><input type="number" name="serum_folate_ng_ml" value="12" required></div>
+            <div class="field"><label>Symptoms count</label><input type="number" name="symptoms_count" value="0" min="0" required></div>
+            <div class="field"><label>Symptoms list</label><input type="text" name="symptoms_list" placeholder="fatigue;bone_pain"></div>
+          </div>
+          <div class="check-grid" style="margin-top:1rem">
+            <label class="check-pill"><input type="hidden" name="has_fatigue" value="0"><input type="checkbox" name="has_fatigue" value="1"> Fatigue</label>
+            <label class="check-pill"><input type="hidden" name="has_bone_pain" value="0"><input type="checkbox" name="has_bone_pain" value="1"> Bone pain</label>
+            <label class="check-pill"><input type="hidden" name="has_night_blindness" value="0"><input type="checkbox" name="has_night_blindness" value="1"> Night blindness</label>
+            <label class="check-pill"><input type="hidden" name="has_memory_problems" value="0"><input type="checkbox" name="has_memory_problems" value="1"> Memory</label>
+            <label class="check-pill"><input type="hidden" name="has_numbness_tingling" value="0"><input type="checkbox" name="has_numbness_tingling" value="1"> Numbness</label>
+            <label class="check-pill"><input type="hidden" name="has_pale_skin" value="0"><input type="checkbox" name="has_pale_skin" value="1"> Pale skin</label>
+            <label class="check-pill"><input type="hidden" name="has_bleeding_gums" value="0"><input type="checkbox" name="has_bleeding_gums" value="1"> Bleeding gums</label>
+            <label class="check-pill"><input type="hidden" name="has_muscle_weakness" value="0"><input type="checkbox" name="has_muscle_weakness" value="1"> Muscle weakness</label>
+            <label class="check-pill"><input type="hidden" name="has_multiple_deficiencies" value="0"><input type="checkbox" name="has_multiple_deficiencies" value="1"> Multi deficiency</label>
+          </div>
+
+          <label class="check-pill" style="margin-top:1.5rem;display:inline-flex">
+            <input type="checkbox" name="include_gemini" value="1" checked> Include AI feedback (Gemini)
+          </label>
+
+          <div id="form-error" class="alert alert-error hidden" style="margin-top:1rem"></div>
+
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:1.5rem" id="run-btn">Run simulation</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    document.getElementById("menu-btn")?.addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+    const form = document.getElementById("lifestyle-form");
+    const errEl = document.getElementById("form-error");
+
+    async function loadProfile() {
+      const res = await fetch("/api/profile", { credentials: "same-origin" });
+      if (res.status === 401) { window.location.href = "/login?next=/lifestyle"; return; }
+      if (!res.ok) return;
+      const data = await res.json();
+      setFormFields(form, data.profile);
+    }
+    loadProfile();
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errEl.classList.add("hidden");
+      form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        const hidden = form.querySelector(`input[type="hidden"][name="${cb.name}"]`);
+        if (hidden) hidden.disabled = cb.checked;
+      });
+      document.querySelectorAll("[data-slider-input]").forEach((inp) => {
+        const key = inp.getAttribute("data-slider-input");
+        const slider = form.querySelector(`[data-slider="${key}"]`);
+        if (slider) inp.value = slider.value;
+      });
+
+      const body = Object.fromEntries(new FormData(form));
+      body.include_gemini = form.elements.include_gemini?.checked ? true : false;
+      const textFields = ["gender","diet_type","exercise_level","smoking_status","alcohol_consumption","sun_exposure","income_level","latitude_region","symptoms_list"];
+      for (const k of Object.keys(body)) {
+        if (textFields.includes(k)) continue;
+        if (k === "include_gemini") continue;
+        body[k] = Number(body[k]);
+      }
+      if (!body.symptoms_list) body.symptoms_list = "";
+
+      const btn = document.getElementById("run-btn");
+      btn.disabled = true;
+      btn.textContent = "Simulating…";
+      try {
+        const res = await fetch("/simulate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || "Simulation failed";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        sessionStorage.setItem("lastSimulation", JSON.stringify(data));
+        window.location.href = "/results";
+      } catch {
+        errEl.textContent = "Could not reach the server.";
+        errEl.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Run simulation";
+      }
+    });
+  </script>
+</body>
+</html>

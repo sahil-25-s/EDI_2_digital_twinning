@@ -1,0 +1,10 @@
+body { font-family: Arial, sans-serif; margin: 20px; max-width: 900px; }
+.nav a { margin-right: 12px; }
+.card { border: 1px solid #d0d7de; border-radius: 8px; padding: 20px; background: #f6f8fa; }
+label { display: block; margin: 8px 0; }
+input, select, button { font-size: 1rem; }
+button { margin-top: 12px; padding: 8px 16px; cursor: pointer; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+h2 { margin-top: 20px; font-size: 1.05rem; }
+.muted { color: #57606a; }
+.flash { color: #cf222e; margin-bottom: 12px; }

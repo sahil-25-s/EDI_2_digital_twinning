@@ -18,6 +18,7 @@
     .error { color: #cf222e; }
     .gemini { line-height: 1.55; white-space: pre-wrap; margin: 0; }
     .loading { color: #57606a; font-style: italic; }
+    .diagnosis { font-size: 1.15rem; font-weight: 600; color: #0969da; }
     nav a { margin-right: 12px; }
   </style>
 </head>
@@ -25,10 +26,13 @@
   <nav>
     <a href="/">Disease prediction</a>
     <a href="/twin"><strong>Digital twin</strong></a>
+    <span id="user-nav"></span>
+    <a href="/logout" id="logout-link">Log out</a>
   </nav>
 
   <h1>Digital Twin Simulation</h1>
-  <p>Simulate how daily habits affect your health scores over time. Targets are personalized from age, height, BMI, and lifestyle.</p>
+  <p id="welcome"></p>
+  <p>Simulate how daily habits affect your health scores over time. Your saved profile is loaded from the database.</p>
 
   <form id="twin-form">
     <h2>Static profile</h2>
@@ -79,6 +83,47 @@
           <option>High</option>
         </select>
       </label>
+      <label>Income level
+        <select name="income_level" required>
+          <option>Low</option>
+          <option selected>Middle</option>
+          <option>High</option>
+        </select>
+      </label>
+      <label>Latitude region
+        <select name="latitude_region" required>
+          <option>Low</option>
+          <option selected>Mid</option>
+          <option>High</option>
+        </select>
+      </label>
+    </div>
+
+    <h2>Health assessment (for disease prediction)</h2>
+    <div class="grid">
+      <label>Vitamin A % RDA <input type="number" name="vitamin_a_percent_rda" step="0.1" value="90" required></label>
+      <label>Vitamin C % RDA <input type="number" name="vitamin_c_percent_rda" step="0.1" value="90" required></label>
+      <label>Vitamin E % RDA <input type="number" name="vitamin_e_percent_rda" step="0.1" value="90" required></label>
+      <label>Folate % RDA <input type="number" name="folate_percent_rda" step="0.1" value="90" required></label>
+      <label>Calcium % RDA <input type="number" name="calcium_percent_rda" step="0.1" value="90" required></label>
+      <label>Hemoglobin (g/dL) <input type="number" name="hemoglobin_g_dl" step="0.1" value="13.5" required></label>
+      <label>Serum vitamin D (ng/mL) <input type="number" name="serum_vitamin_d_ng_ml" step="0.1" value="30" required></label>
+      <label>Serum vitamin B12 (pg/mL) <input type="number" name="serum_vitamin_b12_pg_ml" step="0.1" value="350" required></label>
+      <label>Serum folate (ng/mL) <input type="number" name="serum_folate_ng_ml" step="0.1" value="12" required></label>
+      <label>Symptoms count <input type="number" name="symptoms_count" min="0" value="1" required></label>
+      <label>Symptoms list <input type="text" name="symptoms_list" placeholder="fatigue;bone_pain"></label>
+    </div>
+    <p>Symptom flags:</p>
+    <div class="grid">
+      <input type="hidden" name="has_fatigue" value="0"><label><input type="checkbox" name="has_fatigue" value="1"> fatigue</label>
+      <input type="hidden" name="has_bone_pain" value="0"><label><input type="checkbox" name="has_bone_pain" value="1"> bone pain</label>
+      <input type="hidden" name="has_night_blindness" value="0"><label><input type="checkbox" name="has_night_blindness" value="1"> night blindness</label>
+      <input type="hidden" name="has_memory_problems" value="0"><label><input type="checkbox" name="has_memory_problems" value="1"> memory problems</label>
+      <input type="hidden" name="has_numbness_tingling" value="0"><label><input type="checkbox" name="has_numbness_tingling" value="1"> numbness/tingling</label>
+      <input type="hidden" name="has_pale_skin" value="0"><label><input type="checkbox" name="has_pale_skin" value="1"> pale skin</label>
+      <input type="hidden" name="has_bleeding_gums" value="0"><label><input type="checkbox" name="has_bleeding_gums" value="1"> bleeding gums</label>
+      <input type="hidden" name="has_muscle_weakness" value="0"><label><input type="checkbox" name="has_muscle_weakness" value="1"> muscle weakness</label>
+      <input type="hidden" name="has_multiple_deficiencies" value="0"><label><input type="checkbox" name="has_multiple_deficiencies" value="1"> multiple deficiencies</label>
     </div>
 
     <h2>Daily habits (repeated each simulated day)</h2>
@@ -102,6 +147,11 @@
 
   <section id="results">
     <div class="card">
+      <h2>Clinical summary</h2>
+      <p id="disease-diagnosis" class="diagnosis"></p>
+      <p id="symptoms-summary"></p>
+    </div>
+    <div class="card">
       <h2>Personalized targets</h2>
       <pre id="targets"></pre>
     </div>
@@ -114,7 +164,7 @@
       <ul id="recommendations"></ul>
     </div>
     <div class="card">
-      <h2>AI feedback (Gemini)</h2>
+      <h2>Feedback</h2>
       <p id="gemini-loading" class="loading" hidden>Generating personalized feedback…</p>
       <p id="gemini-feedback" class="gemini" hidden></p>
       <p id="gemini-error" class="error" hidden></p>
@@ -125,6 +175,31 @@
   <script>
     const form = document.getElementById("twin-form");
     const results = document.getElementById("results");
+
+    function setField(name, value) {
+      const el = form.elements[name];
+      if (!el || value === undefined || value === null) return;
+      if (el.type === "checkbox") {
+        el.checked = Number(value) === 1;
+      } else {
+        el.value = value;
+      }
+    }
+
+    async function loadProfile() {
+      const res = await fetch("/api/profile", { credentials: "same-origin" });
+      if (res.status === 401) {
+        window.location.href = "/login?next=/twin";
+        return;
+      }
+      if (!res.ok) return;
+      const data = await res.json();
+      document.getElementById("welcome").textContent = `Welcome, ${data.user.name}.`;
+      document.getElementById("user-nav").textContent = `Signed in as ${data.user.email}`;
+      const p = data.profile;
+      Object.keys(p).forEach((key) => setField(key, p[key]));
+    }
+    loadProfile();
 
     function renderBar(label, value) {
       const v = Math.round(Number(value));
@@ -141,16 +216,26 @@
       document.getElementById("gemini-error").hidden = true;
       document.getElementById("submit-btn").disabled = true;
 
+      form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+        const hidden = form.querySelector(`input[type="hidden"][name="${checkbox.name}"]`);
+        if (hidden) hidden.disabled = checkbox.checked;
+      });
+
       const body = Object.fromEntries(new FormData(form));
       const includeGemini = body.include_gemini === "1";
       delete body.include_gemini;
       body.include_gemini = includeGemini;
 
+      const textFields = [
+        "gender", "diet_type", "exercise_level", "smoking_status", "alcohol_consumption",
+        "sun_exposure", "income_level", "latitude_region", "symptoms_list",
+      ];
       for (const k of Object.keys(body)) {
         if (k === "include_gemini") continue;
-        if (["gender", "diet_type", "exercise_level", "smoking_status", "alcohol_consumption", "sun_exposure"].includes(k)) continue;
+        if (textFields.includes(k)) continue;
         body[k] = Number(body[k]);
       }
+      if (!body.symptoms_list) body.symptoms_list = "";
 
       if (includeGemini) {
         document.getElementById("gemini-loading").hidden = false;
@@ -160,14 +245,24 @@
         const res = await fetch("/simulate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
           body: JSON.stringify(body),
         });
+        if (res.status === 401) {
+          window.location.href = "/login?next=/twin";
+          return;
+        }
         const data = await res.json();
         if (!res.ok) {
           document.getElementById("result-error").hidden = false;
           document.getElementById("result-error").textContent = data.error || "Simulation failed";
           return;
         }
+
+        document.getElementById("disease-diagnosis").textContent =
+          `Predicted disease: ${data.disease_diagnosis || "Unknown"}`;
+        document.getElementById("symptoms-summary").textContent =
+          `Symptoms: ${data.symptoms_list || "none"} (count: ${data.clinical_assessment?.symptoms_count ?? 0})`;
 
         document.getElementById("targets").textContent = JSON.stringify(data.personalized_targets, null, 2);
         const stateEl = document.getElementById("state-metrics");
@@ -192,6 +287,9 @@
       } finally {
         document.getElementById("gemini-loading").hidden = true;
         document.getElementById("submit-btn").disabled = false;
+        form.querySelectorAll('input[type="hidden"]').forEach((input) => {
+          input.disabled = false;
+        });
       }
     });
   </script>

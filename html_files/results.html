@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulation results</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">Lifestyle Digital Twin</div>
+      <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/lifestyle">Lifestyle input</a>
+        <a href="/results" class="active">Latest results</a>
+        <a href="/predict-page">Disease screening</a>
+      </nav>
+      <div class="sidebar-footer"><a href="/logout" class="btn btn-secondary btn-block">Log out</a></div>
+    </aside>
+    <div class="main">
+      <header class="topbar"><strong>Simulation results</strong></header>
+      <div class="page">
+        <div id="no-data" class="card hidden">
+          <p>No simulation data yet. <a href="/lifestyle">Run a simulation</a> first.</p>
+        </div>
+        <div id="results-root" class="hidden">
+          <div class="card" style="margin-bottom:1.5rem">
+            <h2 style="margin:0 0 0.5rem;font-size:1.25rem">Clinical summary</h2>
+            <p style="margin:0"><strong id="diagnosis"></strong> <span id="risk-badge"></span></p>
+            <p class="text-muted" id="symptoms-line"></p>
+            <p class="text-muted" id="sim-days"></p>
+          </div>
+
+          <div class="card-grid" id="rings-row"></div>
+
+          <div class="card" style="margin-bottom:1.5rem">
+            <h2 style="margin-top:0;font-size:1.1rem">Health trajectory</h2>
+            <div class="chart-box"><canvas id="trend-chart"></canvas></div>
+          </div>
+
+          <div class="card" style="margin-bottom:1.5rem">
+            <h2 style="margin-top:0;font-size:1.1rem">Future timeline</h2>
+            <div class="timeline" id="timeline"></div>
+          </div>
+
+          <div class="card" style="margin-bottom:1.5rem">
+            <h2 style="margin-top:0;font-size:1.1rem">Recommendations</h2>
+            <ul class="rec-list" id="rec-list"></ul>
+          </div>
+
+          <div class="card hidden" id="gemini-card">
+            <h2 style="margin-top:0;font-size:1.1rem">AI feedback</h2>
+            <p id="gemini-text" style="white-space:pre-wrap;line-height:1.6"></p>
+          </div>
+          <div class="alert alert-error hidden" id="gemini-err"></div>
+        </div>
+        <a href="/lifestyle" class="btn btn-primary">Run another simulation</a>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    async function renderResults(data) {
+      if (!data) {
+        document.getElementById("no-data").classList.remove("hidden");
+        return;
+      }
+      document.getElementById("results-root").classList.remove("hidden");
+      const state = data.final_state || {};
+      document.getElementById("diagnosis").textContent = data.disease_diagnosis || "—";
+      document.getElementById("risk-badge").innerHTML = riskBadge(state.deficiency_risk, true);
+      document.getElementById("symptoms-line").textContent = `Symptoms: ${data.symptoms_list || "none"}`;
+      document.getElementById("sim-days").textContent = `Simulated over ${data.simulation_days} days`;
+
+      const metrics = [
+        ["Energy", state.energy_level, "#2563eb", false],
+        ["Fatigue", state.fatigue_level, "#d97706", false],
+        ["Hydration", state.hydration_score, "#0d9488", false],
+        ["Deficiency risk", state.deficiency_risk, "#dc2626", true],
+        ["Focus", state.focus_level, "#7c3aed", false],
+        ["Nutrition", state.nutrition_score, "#059669", false],
+      ];
+      document.getElementById("rings-row").innerHTML = metrics.map(([l,v,c,inv]) => renderRing(l,v,c,inv)).join("");
+
+      drawTrendChart("trend-chart", data.history || []);
+
+      const tl = document.getElementById("timeline");
+      const days = data.simulation_days || 0;
+      tl.innerHTML = `
+        <div class="timeline-item"><strong>Day 1–${Math.ceil(days/3)}</strong><br><span class="text-muted">Baseline adjustment to daily inputs</span></div>
+        <div class="timeline-item"><strong>Day ${Math.ceil(days/3)+1}–${Math.ceil(2*days/3)}</strong><br><span class="text-muted">Cumulative impact on fatigue &amp; hydration scores</span></div>
+        <div class="timeline-item"><strong>Day ${Math.ceil(2*days/3)+1}–${days}</strong><br><span class="text-muted">Projected state: energy ${Math.round(state.energy_level||0)}, deficiency risk ${Math.round(state.deficiency_risk||0)}</span></div>`;
+
+      document.getElementById("rec-list").innerHTML = (data.recommendations || [])
+        .map((r) => `<li>${r}</li>`).join("");
+
+      if (data.gemini_feedback) {
+        document.getElementById("gemini-card").classList.remove("hidden");
+        document.getElementById("gemini-text").textContent = data.gemini_feedback;
+      } else if (data.gemini_error) {
+        const g = document.getElementById("gemini-err");
+        g.textContent = data.gemini_error;
+        g.classList.remove("hidden");
+      }
+    }
+
+    (async () => {
+      let data = null;
+      const raw = sessionStorage.getItem("lastSimulation");
+      if (raw) data = JSON.parse(raw);
+      else {
+        const res = await fetch("/api/latest-simulation", { credentials: "same-origin" });
+        if (res.ok) data = await res.json();
+      }
+      await renderResults(data);
+    })();
+  </script>
+</body>
+</html>

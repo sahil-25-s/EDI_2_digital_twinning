@@ -1,3 +1,15 @@
-from digital_twin.engine import DigitalTwin, StaticProfile, DailyHabits, TwinState
+from digital_twin.engine import (
+    ClinicalAssessment,
+    DailyHabits,
+    DigitalTwin,
+    StaticProfile,
+    TwinState,
+)
 
-__all__ = ["DigitalTwin", "StaticProfile", "DailyHabits", "TwinState"]
+__all__ = [
+    "ClinicalAssessment",
+    "DailyHabits",
+    "DigitalTwin",
+    "StaticProfile",
+    "TwinState",
+]

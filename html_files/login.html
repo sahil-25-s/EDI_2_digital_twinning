@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="auth-page">
+  <div class="glass-card">
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to access your digital twin dashboard.</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-error" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="/login" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@university.edu">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="toggle-pw" data-toggle-password="password" aria-label="Toggle password">Show</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Log in</button>
+    </form>
+    <p class="text-muted mt-2" style="text-align:center;font-size:0.9rem">
+      No account? <a href="/register">Create one</a>
+    </p>
+    <p style="text-align:center;margin-top:1rem"><a href="/" class="text-muted">← Back to home</a></p>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

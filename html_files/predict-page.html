@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disease screening</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">Lifestyle Digital Twin</div>
+      <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/lifestyle">Lifestyle input</a>
+        <a href="/results">Latest results</a>
+        <a href="/predict-page" class="active">Disease screening</a>
+      </nav>
+      <div class="sidebar-footer"><a href="/logout" class="btn btn-secondary btn-block">Log out</a></div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="btn btn-secondary mobile-menu" id="menu-btn">Menu</button>
+        <strong>ML disease screening</strong>
+      </header>
+      <div class="page">
+        <p class="text-muted">Uses your saved profile plus any edits below. All fields are required for the screening model.</p>
+
+        <form id="predict-form" class="card">
+          <h2 style="margin-top:0;font-size:1.05rem">Lifestyle &amp; demographics</h2>
+          <div class="form-grid">
+            <div class="field"><label>Age</label><input type="number" name="age" value="30" required></div>
+            <div class="field"><label>BMI</label><input type="number" name="bmi" step="0.1" value="22" required></div>
+            <div class="field"><label>Gender</label><select name="gender" required><option>Male</option><option>Female</option></select></div>
+            <div class="field"><label>Diet</label><select name="diet_type" required><option>Omnivore</option><option>Vegetarian</option><option>Vegan</option><option>Pescatarian</option></select></div>
+            <div class="field"><label>Exercise</label><select name="exercise_level" required><option>Sedentary</option><option>Light</option><option selected>Moderate</option><option>Active</option></select></div>
+            <div class="field"><label>Smoking</label><select name="smoking_status" required><option>Never</option><option>Former</option><option>Current</option></select></div>
+            <div class="field"><label>Alcohol</label><select name="alcohol_consumption"><option value="">None</option><option>Moderate</option><option>Heavy</option><option>Light</option></select></div>
+            <div class="field"><label>Sun exposure</label><select name="sun_exposure" required><option>Low</option><option>Moderate</option><option>High</option></select></div>
+            <div class="field"><label>Income level</label><select name="income_level" required><option>Low</option><option selected>Middle</option><option>High</option></select></div>
+            <div class="field"><label>Latitude region</label><select name="latitude_region" required><option>Low</option><option selected>Mid</option><option>High</option></select></div>
+          </div>
+
+          <h2 style="font-size:1.05rem;margin-top:2rem">Micronutrients &amp; labs</h2>
+          <div class="form-grid">
+            <div class="field slider-row">
+              <div><label>Vitamin D % RDA</label><input type="range" min="0" max="200" value="80" data-slider="vitamin_d_percent_rda" data-format="int"></div>
+              <span class="slider-value" data-slider-out="vitamin_d_percent_rda">80</span>
+              <input type="hidden" name="vitamin_d_percent_rda" data-slider-input="vitamin_d_percent_rda" value="80">
+            </div>
+            <div class="field"><label>Vitamin A % RDA</label><input type="number" name="vitamin_a_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Vitamin C % RDA</label><input type="number" name="vitamin_c_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Vitamin E % RDA</label><input type="number" name="vitamin_e_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Vitamin B12 % RDA</label><input type="number" name="vitamin_b12_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Folate % RDA</label><input type="number" name="folate_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Calcium % RDA</label><input type="number" name="calcium_percent_rda" step="0.1" value="90" required></div>
+            <div class="field"><label>Iron % RDA</label><input type="number" name="iron_percent_rda" step="0.1" value="85" required></div>
+            <div class="field slider-row">
+              <div><label>Hemoglobin (g/dL)</label><input type="range" min="8" max="18" step="0.1" value="13.5" data-slider="hemoglobin_g_dl" data-format="dec1"></div>
+              <span class="slider-value" data-slider-out="hemoglobin_g_dl">13.5</span>
+              <input type="hidden" name="hemoglobin_g_dl" data-slider-input="hemoglobin_g_dl" value="13.5">
+            </div>
+            <div class="field"><label>Serum vitamin D (ng/mL)</label><input type="number" name="serum_vitamin_d_ng_ml" step="0.1" value="30" required></div>
+            <div class="field"><label>Serum B12 (pg/mL)</label><input type="number" name="serum_vitamin_b12_pg_ml" step="0.1" value="350" required></div>
+            <div class="field"><label>Serum folate (ng/mL)</label><input type="number" name="serum_folate_ng_ml" step="0.1" value="12" required></div>
+            <div class="field"><label>Symptoms count</label><input type="number" name="symptoms_count" value="0" min="0" required></div>
+            <div class="field"><label>Symptoms list</label><input type="text" name="symptoms_list" placeholder="fatigue;bone_pain"></div>
+          </div>
+
+          <h2 style="font-size:1.05rem;margin-top:1.5rem">Symptom flags</h2>
+          <div class="check-grid">
+            <label class="check-pill"><input type="hidden" name="has_fatigue" value="0"><input type="checkbox" name="has_fatigue" value="1"> Fatigue</label>
+            <label class="check-pill"><input type="hidden" name="has_bone_pain" value="0"><input type="checkbox" name="has_bone_pain" value="1"> Bone pain</label>
+            <label class="check-pill"><input type="hidden" name="has_night_blindness" value="0"><input type="checkbox" name="has_night_blindness" value="1"> Night blindness</label>
+            <label class="check-pill"><input type="hidden" name="has_memory_problems" value="0"><input type="checkbox" name="has_memory_problems" value="1"> Memory problems</label>
+            <label class="check-pill"><input type="hidden" name="has_numbness_tingling" value="0"><input type="checkbox" name="has_numbness_tingling" value="1"> Numbness</label>
+            <label class="check-pill"><input type="hidden" name="has_pale_skin" value="0"><input type="checkbox" name="has_pale_skin" value="1"> Pale skin</label>
+            <label class="check-pill"><input type="hidden" name="has_bleeding_gums" value="0"><input type="checkbox" name="has_bleeding_gums" value="1"> Bleeding gums</label>
+            <label class="check-pill"><input type="hidden" name="has_muscle_weakness" value="0"><input type="checkbox" name="has_muscle_weakness" value="1"> Muscle weakness</label>
+            <label class="check-pill"><input type="hidden" name="has_multiple_deficiencies" value="0"><input type="checkbox" name="has_multiple_deficiencies" value="1"> Multiple deficiencies</label>
+          </div>
+
+          <div style="margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:0.75rem">
+            <button type="button" class="btn btn-primary" id="predict-btn">Predict</button>
+            <button type="button" class="btn btn-secondary" id="explain-btn">Predict + explain</button>
+          </div>
+
+          <div id="predict-out" class="card hidden" style="margin-top:1.5rem">
+            <h3 style="margin:0 0 0.5rem;font-size:1.15rem;color:var(--primary)" id="pred-label"></h3>
+            <p id="pred-expl" class="text-muted" style="white-space:pre-wrap;margin:0"></p>
+          </div>
+          <div id="predict-err" class="alert alert-error hidden" role="alert"></div>
+          <p id="predict-loading" class="loading hidden">Processing…</p>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    document.getElementById("menu-btn")?.addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("open");
+    });
+
+    const form = document.getElementById("predict-form");
+    const outCard = document.getElementById("predict-out");
+    const errEl = document.getElementById("predict-err");
+    const loadingEl = document.getElementById("predict-loading");
+
+    async function loadProfile() {
+      const res = await fetch("/api/profile", { credentials: "same-origin" });
+      if (res.status === 401) {
+        window.location.href = "/login?next=/predict-page";
+        return;
+      }
+      if (!res.ok) return;
+      const data = await res.json();
+      setFormFields(form, data.profile);
+    }
+    loadProfile();
+
+    function prepareFormData() {
+      form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        const hidden = form.querySelector(`input[type="hidden"][name="${cb.name}"]`);
+        if (hidden) hidden.disabled = cb.checked;
+      });
+      document.querySelectorAll("[data-slider-input]").forEach((inp) => {
+        const key = inp.getAttribute("data-slider-input");
+        const slider = form.querySelector(`[data-slider="${key}"]`);
+        if (slider) inp.value = slider.value;
+      });
+      return new FormData(form);
+    }
+
+    function showError(msg) {
+      outCard.classList.add("hidden");
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
+
+    function showResult(data, withExplanation) {
+      errEl.classList.add("hidden");
+      outCard.classList.remove("hidden");
+      if (data.error) {
+        showError(data.error);
+        return;
+      }
+      document.getElementById("pred-label").textContent =
+        "Prediction: " + (data.prediction || data.diagnosis || "—");
+      const expl = document.getElementById("pred-expl");
+      if (withExplanation && data.explanation) {
+        expl.textContent = data.explanation;
+      } else if (data.gemini_error) {
+        expl.textContent =
+          "Prediction succeeded, but the AI explanation could not be generated: " + data.gemini_error;
+      } else {
+        expl.textContent = withExplanation
+          ? "No explanation returned. Check GEMINI_API_KEY and quota."
+          : "Run “Predict + explain” for an AI summary.";
+      }
+    }
+
+    async function runPredict(withExplanation) {
+      errEl.classList.add("hidden");
+      loadingEl.classList.remove("hidden");
+      document.getElementById("predict-btn").disabled = true;
+      document.getElementById("explain-btn").disabled = true;
+
+      try {
+        const fd = prepareFormData();
+        const url = withExplanation ? "/explain" : "/predict";
+        const res = await fetch(url, {
+          method: "POST",
+          body: fd,
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+        });
+        if (res.status === 401) {
+          window.location.href = "/login?next=/predict-page";
+          return;
+        }
+        const contentType = res.headers.get("content-type") || "";
+        let data;
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          showError("Unexpected server response. Sign in again or restart the app.");
+          return;
+        }
+        if (!res.ok) {
+          showError(data.error || "Request failed (" + res.status + ").");
+          return;
+        }
+        showResult(data, withExplanation);
+      } catch {
+        showError("Could not reach the server. Is the app running?");
+      } finally {
+        loadingEl.classList.add("hidden");
+        document.getElementById("predict-btn").disabled = false;
+        document.getElementById("explain-btn").disabled = false;
+        form.querySelectorAll('input[type="hidden"]').forEach((h) => { h.disabled = false; });
+      }
+    }
+
+    document.getElementById("predict-btn").addEventListener("click", () => runPredict(false));
+    document.getElementById("explain-btn").addEventListener("click", () => runPredict(true));
+  </script>
+</body>
+</html>
