@@ -320,7 +320,7 @@ def build_twin_gemini_prompt(simulation: dict) -> str:
         "Write 2 short paragraphs:\n"
         "1) What the simulation suggests about current health trajectory.\n"
         "2) Top 3 prioritized habit changes for the next week.\n"
-        "Keep language simple and actionable. Do not diagnose disease."
+        "Keep language simple and actionable. Do not diagnose disease. Plain text only, no markdown"
     )
 
 
@@ -529,7 +529,7 @@ def explain():
         prompt = (
             "You are a helpful medical assistant. Produce a concise, patient-friendly paragraph explaining the diagnosis\n"
             f"Diagnosis: {diagnosis}\n\n"
-            "Include a brief explanation of what it means, likely causes, and general dietary/lifestyle suggestions the patient can discuss with their clinician."
+            "Include a brief explanation of what it means, likely causes, and general dietary/lifestyle suggestions the patient can discuss with their clinician. Plain text only, no markdown"
         )
         try:
             explanation = call_gemini(prompt)
